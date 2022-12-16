@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/cupertino.dart';
 import 'task.dart';
@@ -16,13 +15,13 @@ class TaskData extends ChangeNotifier {
     return _tasks.length;
   }
 
-  void initTaskData() async {
-    final SharedPreferences prefs = await SharedPreferences.getInstance();
-    int x = prefs.getInt('length') ?? 0;
+  Future initTaskData() async {
     List<Task> tasks = [];
-    if (x > 0) {
-      for (var i = 0; i < x; i++) {
-        var json = prefs.getString('task${i + 1}') ?? '';
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> savedTasks = prefs.getStringList('tasksNamesList') ?? [];
+    if (savedTasks.isNotEmpty) {
+      for (var item in savedTasks) {
+        var json = prefs.getString(item) ?? '';
         if (json != '') {
           tasks.add(Task.fromJson(jsonDecode(json)));
         }
@@ -34,27 +33,30 @@ class TaskData extends ChangeNotifier {
 
   void addTask(String newTaskTitle) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    List<String> savedTasks = prefs.getStringList('tasksNamesList') ?? [];
     final task = Task(name: newTaskTitle);
     _tasks.add(task);
     String json = jsonEncode(task.toJson());
-    prefs.setString('task${_tasks.length}', json);
-    prefs.setInt('length', _tasks.length);
+    prefs.setString(task.name, json);
+    savedTasks.add(task.name);
+    prefs.setStringList('tasksNamesList', savedTasks);
     notifyListeners();
   }
 
-  void updateTask(Task task, int index) async {
+  void updateTask(Task task) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     task.toggleDone();
     String json = jsonEncode(task.toJson());
-    prefs.setString('task${index + 1}', json);
+    prefs.setString(task.name, json);
     notifyListeners();
   }
 
-  void deleteTask(Task task, int index) async {
+  void deleteTask(Task task) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.remove('task${index + 1}');
+    List<String>? savedTasks = prefs.getStringList('tasksNamesList');
+    prefs.remove(task.name);
+    savedTasks?.remove(task.name);
     _tasks.remove(task);
-    prefs.setInt('length', _tasks.length);
     notifyListeners();
   }
 }

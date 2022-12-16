@@ -7,7 +7,7 @@ var taskData = TaskData();
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  taskData.initTaskData();
+  await taskData.initTaskData();
   runApp(MyApp());
 }
 
