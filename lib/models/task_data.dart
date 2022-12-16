@@ -8,6 +8,7 @@ class TaskData extends ChangeNotifier {
   late final List<Task> _tasks;
 
   UnmodifiableListView<Task> get tasks {
+    // prevents users modifying tasks outside class
     return UnmodifiableListView(_tasks);
   }
 
@@ -18,12 +19,18 @@ class TaskData extends ChangeNotifier {
   Future initTaskData() async {
     List<Task> tasks = [];
     final SharedPreferences prefs = await SharedPreferences.getInstance();
+    // checks for saved tasks
     List<String> savedTasks = prefs.getStringList('tasksNamesList') ?? [];
     if (savedTasks.isNotEmpty) {
       for (var item in savedTasks) {
         var json = prefs.getString(item) ?? '';
         if (json != '') {
-          tasks.add(Task.fromJson(jsonDecode(json)));
+          // Shared preferences only accept strings
+          tasks.add(
+            Task.fromJson(
+              jsonDecode(json),
+            ),
+          );
         }
       }
     }
